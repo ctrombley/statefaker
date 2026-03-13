@@ -129,7 +129,14 @@ puts "Plan: Push #{options[:iterations]} new versions starting at serial #{curre
 temp_file = File.join(Dir.pwd, "temp_huge.tfstate")
 
 (1..options[:iterations]).each do |i|
-  next_serial = current_serial + i
+  # Fetch latest serial to handle remote updates/migrations
+  stdout, stderr, status = Open3.capture3("terraform", "state", "pull", :chdir => target_cwd)
+  if status.success?
+    remote_state = JSON.parse(stdout)
+    current_serial = remote_state["serial"]
+  end
+  
+  next_serial = current_serial + 1
   puts "\n--- Iteration #{i}/#{options[:iterations]} (Target Serial: #{next_serial}) ---"
 
   # Generate

@@ -88,7 +88,7 @@ func NewFakeStateV4(opts ...Option) (*StateV4, error) {
 			}
 
 			// Manually generate attributes based on resource type
-			attrs, err := GenerateAttributes(resourceType)
+			attrs, err := GenerateAttributes(resourceType, mode)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate attributes: %w", err)
 			}

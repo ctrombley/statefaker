@@ -344,10 +344,9 @@ func generateSecurityGroupOutput(output *OutputV4) {
 func generateAPIGatewayRestAPIAttributes() map[string]any {
 	apiID := fmt.Sprintf("%s-api", faker.UUIDDigit()[:10])
 	return map[string]any{
-		"id":           apiID,
-		"name":         generateResourceName(),
-		"description":  faker.Sentence(),
-		"created_date": faker.Date(),
+		"id":          apiID,
+		"name":        generateResourceName(),
+		"description": faker.Sentence(),
 		"tags": map[string]string{
 			"Environment": "production",
 			"Service":     "api-gateway",
@@ -446,7 +445,7 @@ func generateRDSInstanceAttributes() map[string]any {
 		"engine":                 []string{"mysql", "postgres", "mariadb"}[rand.IntN(3)],
 		"engine_version":         "14.1",
 		"instance_class":         "db.t3.micro",
-		"name":                   instanceID,
+		"db_name":                instanceID, // Was "name", now deprecated/removed in v5
 		"username":               faker.Username(),
 		"password":               faker.Password(),
 		"port":                   5432,
