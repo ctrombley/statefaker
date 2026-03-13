@@ -8,17 +8,35 @@ import (
 	"reflect"
 )
 
-func tfattributesProvider(v reflect.Value) (any, error) {
-	// Generate realistic resource attributes based on common AWS resource types
-	attributeGenerators := []func() map[string]any{
-		generateS3BucketAttributes,
-		generateIAMUserAttributes,
-		generateEC2InstanceAttributes,
-		generateLambdaFunctionAttributes,
-		generateRDSInstanceAttributes,
+func GenerateAttributes(resourceType string) (json.RawMessage, error) {
+	// Generate realistic resource attributes based on resource type
+	var generator func() map[string]any
+
+	switch resourceType {
+	case "aws_s3_bucket":
+		generator = generateS3BucketAttributes
+	case "aws_iam_user":
+		generator = generateIAMUserAttributes
+	case "aws_instance":
+		generator = generateEC2InstanceAttributes
+	case "aws_lambda_function":
+		generator = generateLambdaFunctionAttributes
+	case "aws_db_instance":
+		generator = generateRDSInstanceAttributes
+	case "aws_api_gateway_rest_api":
+		generator = generateAPIGatewayRestAPIAttributes
+	default:
+		// Fallback for types without specific generators
+		generator = func() map[string]any {
+			// Generate minimal valid attributes based on ID only
+			// Most resources have an ID, and extra unknown attributes can cause errors
+			name := generateResourceName()
+			return map[string]any{
+				"id": name,
+			}
+		}
 	}
 
-	generator := attributeGenerators[rand.IntN(len(attributeGenerators))]
 	resourceAttributes := generator()
 
 	b, err := json.Marshal(resourceAttributes)
@@ -30,23 +48,8 @@ func tfattributesProvider(v reflect.Value) (any, error) {
 }
 
 func tfidentityProvider(v reflect.Value) (any, error) {
-	// Most of the time, generate an empty identity
-	if rand.IntN(5) > 2 {
-		return json.RawMessage(""), nil
-	}
-
-	// Generate a simple identity structure
-	identity := map[string]any{
-		"arn":        generateARN("iam", fmt.Sprintf("user/%s", generateUserName())),
-		"account_id": generateAWSAccountID(),
-		"region":     generateAWSRegion(),
-	}
-
-	b, err := json.Marshal(identity)
-	if err != nil {
-		return nil, err
-	}
-	return json.RawMessage(b), nil
+	// Always return nil for identity as most resources don't support it
+	return nil, nil
 }
 
 func tfprivateProvider(v reflect.Value) (any, error) {
