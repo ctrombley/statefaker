@@ -344,16 +344,31 @@ func generateSecurityGroupOutput(output *OutputV4) {
 func generateAPIGatewayRestAPIAttributes() map[string]any {
 	apiID := fmt.Sprintf("%s-api", faker.UUIDDigit()[:10])
 	return map[string]any{
-		"id": apiID,
+		"id":           apiID,
+		"name":         generateResourceName(),
+		"description":  faker.Sentence(),
+		"created_date": faker.Date(),
+		"tags": map[string]string{
+			"Environment": "production",
+			"Service":     "api-gateway",
+		},
 	}
 }
 
 func generateS3BucketAttributes() map[string]any {
 	bucketName := generateS3BucketName()
 	return map[string]any{
-		"id":     bucketName,
-		"arn":    generateARN("s3", bucketName),
-		"bucket": bucketName,
+		"id":                          bucketName,
+		"arn":                         generateARN("s3", bucketName),
+		"bucket":                      bucketName,
+		"bucket_domain_name":          fmt.Sprintf("%s.s3.amazonaws.com", bucketName),
+		"bucket_regional_domain_name": fmt.Sprintf("%s.s3.%s.amazonaws.com", bucketName, generateAWSRegion()),
+		"hosted_zone_id":              "Z3AQBSTJI090",
+		"region":                      generateAWSRegion(),
+		"tags": map[string]string{
+			"Environment": "production",
+			"Team":        "devops",
+		},
 	}
 }
 
@@ -362,8 +377,13 @@ func generateIAMUserAttributes() map[string]any {
 	return map[string]any{
 		"id":                   userName,
 		"arn":                  generateARN("iam", fmt.Sprintf("user/%s", userName)),
+		"name":                 userName,
 		"path":                 "/",
 		"permissions_boundary": nil,
+		"force_destroy":        false,
+		"tags": map[string]string{
+			"ManagedBy": "terraform",
+		},
 	}
 }
 
@@ -371,6 +391,7 @@ func generateEC2InstanceAttributes() map[string]any {
 	instanceID := fmt.Sprintf("i-%s", faker.UUIDDigit()[:17])
 	return map[string]any{
 		"id":                     instanceID,
+		"arn":                    generateARN("ec2", fmt.Sprintf("instance/%s", instanceID)),
 		"instance_type":          []string{"t3.micro", "t3.small", "m5.large", "c5.xlarge"}[rand.IntN(4)],
 		"ami":                    fmt.Sprintf("ami-%s", faker.UUIDDigit()[:17]),
 		"availability_zone":      generateAWSRegion() + []string{"a", "b", "c"}[rand.IntN(3)],
@@ -380,6 +401,10 @@ func generateEC2InstanceAttributes() map[string]any {
 		"vpc_security_group_ids": []string{fmt.Sprintf("sg-%s", faker.UUIDDigit()[:17])},
 		"key_name":               faker.Username(),
 		"monitoring":             rand.IntN(2) == 1,
+		"tags": map[string]string{
+			"Name":        generateResourceName(),
+			"Environment": "production",
+		},
 	}
 }
 
@@ -387,6 +412,7 @@ func generateLambdaFunctionAttributes() map[string]any {
 	functionName := fmt.Sprintf("%s-lambda", generateResourceName())
 	return map[string]any{
 		"id":               functionName,
+		"arn":              generateARN("lambda", fmt.Sprintf("function:%s", functionName)),
 		"function_name":    functionName,
 		"role":             generateARN("iam", fmt.Sprintf("role/%s-lambda-role", generateResourceName())),
 		"handler":          "index.handler",
@@ -404,13 +430,33 @@ func generateLambdaFunctionAttributes() map[string]any {
 				},
 			},
 		},
+		"tags": map[string]string{
+			"Project": "serverless",
+		},
 	}
 }
 
 func generateRDSInstanceAttributes() map[string]any {
 	instanceID := fmt.Sprintf("%s-db", generateResourceName())
 	return map[string]any{
-		"id": instanceID,
+		"id":                     instanceID,
+		"arn":                    generateARN("rds", fmt.Sprintf("db:%s", instanceID)),
+		"allocated_storage":      rand.IntN(100) + 20,
+		"storage_type":           "gp2",
+		"engine":                 []string{"mysql", "postgres", "mariadb"}[rand.IntN(3)],
+		"engine_version":         "14.1",
+		"instance_class":         "db.t3.micro",
+		"name":                   instanceID,
+		"username":               faker.Username(),
+		"password":               faker.Password(),
+		"port":                   5432,
+		"publicly_accessible":    false,
+		"vpc_security_group_ids": []string{fmt.Sprintf("sg-%s", faker.UUIDDigit()[:17])},
+		"db_subnet_group_name":   fmt.Sprintf("subnet-group-%s", faker.Word()),
+		"tags": map[string]string{
+			"Environment": "production",
+			"Database":    "primary",
+		},
 	}
 }
 
